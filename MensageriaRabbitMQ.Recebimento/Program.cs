@@ -13,6 +13,8 @@ channel.QueueDeclare(queue: "task_queue_2",
                         autoDelete: false,
                         arguments: null);
 
+channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false); //processar apenas uma mensagem por vez
+
 Console.WriteLine("[*] Aguardando mensagens.");
 
 var consumidor = new EventingBasicConsumer(channel);
