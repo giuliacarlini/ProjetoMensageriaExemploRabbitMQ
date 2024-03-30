@@ -20,9 +20,13 @@ var consumidor = new EventingBasicConsumer(channel);
 consumidor.Received += (model, ea) =>
 {
     var corpo = ea.Body.ToArray();
-    var mensage = Encoding.UTF8.GetString(corpo);
+    var mensagem = Encoding.UTF8.GetString(corpo);
 
-    Console.WriteLine($"[x] Recebido: {mensage}");
+    Console.WriteLine($"[x] Recebido: {mensagem}");
+
+    int dots = mensagem.Split( '.' ).Length - 1;
+    Thread.Sleep( dots * 1000);
+    Console.WriteLine("[x] Concluído");
 };
 
 channel.BasicConsume(queue: "hello",
