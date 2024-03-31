@@ -7,13 +7,13 @@ var factory = new ConnectionFactory { HostName = "localhost" };
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
-channel.ExchangeDeclare("direct_logs", ExchangeType.Direct);
+channel.ExchangeDeclare("topic_logs", ExchangeType.Topic);
 
 var queueName = channel.QueueDeclare().QueueName;
 
 if (args.Length < 1)
 {
-    Console.Error.WriteLine("Usage: {0} [info] [warning] [error]",
+    Console.Error.WriteLine("Usage: {0} [binding_key...]",
                             Environment.GetCommandLineArgs()[0]);
     Console.WriteLine(" Press [enter] to exit.");
     Console.ReadLine();
@@ -21,12 +21,11 @@ if (args.Length < 1)
     return;
 }
 
-foreach (var serverity in args)
+foreach (var bindingKey in args)
 {
-
     channel.QueueBind(queue: queueName,
-                      exchange: "direct_logs",
-                      routingKey: serverity);
+                      exchange: "topic_logs",
+                      routingKey: bindingKey);
 }
 
 Console.WriteLine("[*] Aguardando mensagens.");
