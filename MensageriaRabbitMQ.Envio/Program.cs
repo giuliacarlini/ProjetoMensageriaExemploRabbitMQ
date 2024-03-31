@@ -6,26 +6,18 @@ var factory = new ConnectionFactory { HostName = "localhost" };
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
-channel.QueueDeclare(queue: "task_queue_2",
-                        durable: true,
-                        exclusive: false,
-                        autoDelete: false,
-                        arguments: null);
+channel.ExchangeDeclare("logs", ExchangeType.Fanout);
 
 var mensagem = GetMessage(args);
-
 var corpo = Encoding.UTF8.GetBytes(mensagem);
-var propriedades = channel.CreateBasicProperties();
-propriedades.Persistent = true;  //persistindo mensagem mesmo que o servidor rabbit dê algum problema
 
 channel.BasicPublish(
-    exchange: string.Empty,
-    routingKey: "task_queue_2",
-    basicProperties: propriedades, //persistindo mensagem mesmo que o servidor rabbit dê algum problema
+    exchange:  "logs",
+    routingKey: string.Empty,
+    basicProperties: null,
     body: corpo);
 
 Console.WriteLine($" [x] Enviado {mensagem}");
-
 
 string GetMessage(string[] args)
 {

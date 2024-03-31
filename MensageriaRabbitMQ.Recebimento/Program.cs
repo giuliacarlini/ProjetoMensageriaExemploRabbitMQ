@@ -7,13 +7,14 @@ var factory = new ConnectionFactory { HostName = "localhost" };
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
-channel.QueueDeclare(queue: "task_queue_2",
-                        durable: true, //garante a permanencia da mensagem na exchange caso o servidor rabbit quebre por algum motivo
-                        exclusive: false,
-                        autoDelete: false,
-                        arguments: null);
+channel.ExchangeDeclare("logs", ExchangeType.Fanout);
 
-channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false); //processar apenas uma mensagem por vez
+var queueName = channel.QueueDeclare().QueueName;
+
+channel.QueueBind(queue: queueName,
+                  exchange: "logs",
+                  routingKey: string.Empty);
+
 
 Console.WriteLine("[*] Aguardando mensagens.");
 
@@ -29,13 +30,10 @@ consumidor.Received += (model, ea) =>
     int dots = mensagem.Split( '.' ).Length - 1;
     Thread.Sleep( dots * 1000);
     Console.WriteLine("[x] Concluído");
-
-    channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false); //linha essencial para dizer que a mensagem foi entregue
-                                                                    //com sucesso e para remoção da fila
 };
 
-channel.BasicConsume(queue: "task_queue_2",
-    autoAck: false, //ack como falso significa que ao cair no recebimento, não vai dizer que a mensagem foi entregue com sucesso
+channel.BasicConsume(queue: queueName,
+    autoAck: true,
     consumer: consumidor);
 
 Console.WriteLine(" Aperte [enter] para sair.");
