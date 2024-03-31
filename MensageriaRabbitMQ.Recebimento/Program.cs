@@ -7,14 +7,27 @@ var factory = new ConnectionFactory { HostName = "localhost" };
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
-channel.ExchangeDeclare("logs", ExchangeType.Fanout);
+channel.ExchangeDeclare("direct_logs", ExchangeType.Direct);
 
 var queueName = channel.QueueDeclare().QueueName;
 
-channel.QueueBind(queue: queueName,
-                  exchange: "logs",
-                  routingKey: string.Empty);
+if (args.Length < 1)
+{
+    Console.Error.WriteLine("Usage: {0} [info] [warning] [error]",
+                            Environment.GetCommandLineArgs()[0]);
+    Console.WriteLine(" Press [enter] to exit.");
+    Console.ReadLine();
+    Environment.ExitCode = 1;
+    return;
+}
 
+foreach (var serverity in args)
+{
+
+    channel.QueueBind(queue: queueName,
+                      exchange: "direct_logs",
+                      routingKey: serverity);
+}
 
 Console.WriteLine("[*] Aguardando mensagens.");
 
@@ -25,11 +38,10 @@ consumidor.Received += (model, ea) =>
     var corpo = ea.Body.ToArray();
     var mensagem = Encoding.UTF8.GetString(corpo);
 
-    Console.WriteLine($"[x] Recebido: {mensagem}");
+    var routingKey = ea.RoutingKey;
 
-    int dots = mensagem.Split( '.' ).Length - 1;
-    Thread.Sleep( dots * 1000);
-    Console.WriteLine("[x] Concluído");
+    Console.WriteLine($"[x] Recebido: '{routingKey}':'{mensagem}'");
+
 };
 
 channel.BasicConsume(queue: queueName,

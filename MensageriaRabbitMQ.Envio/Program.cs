@@ -6,18 +6,20 @@ var factory = new ConnectionFactory { HostName = "localhost" };
 using var connection = factory.CreateConnection();
 using var channel = connection.CreateModel();
 
-channel.ExchangeDeclare("logs", ExchangeType.Fanout);
+channel.ExchangeDeclare("direct_logs", ExchangeType.Direct);
 
-var mensagem = GetMessage(args);
-var corpo = Encoding.UTF8.GetBytes(mensagem);
+var severity = (args.Length > 0) ? args[0] : "info";
+var message = (args.Length > 1) ? string.Join(" ", args.Skip(1).ToArray()) : "Hello World";
+
+var corpo = Encoding.UTF8.GetBytes(message);
 
 channel.BasicPublish(
-    exchange:  "logs",
-    routingKey: string.Empty,
+    exchange: "direct_logs",
+    routingKey: severity,
     basicProperties: null,
     body: corpo);
 
-Console.WriteLine($" [x] Enviado {mensagem}");
+Console.WriteLine($" [x] Enviado '{severity}': '{message}'");
 
 string GetMessage(string[] args)
 {
